@@ -5,8 +5,10 @@ import {
 } from 'three';
 
 var mobile
-mobile = true;
-var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+mobile = false;
+if(window.matchMedia("(any-pointer: coarse)").matches) {
+    mobile = true
+}
 
 const ww = document.body.clientWidth / 2;
 const wh = document.body.clientHeight / 2;
@@ -231,7 +233,7 @@ class PointerLockControls extends Controls {
 		if( mobile == true) {
 
 			this.isLocked = true;
-			this.connect();
+			// this.connect();
 			
 		} else {
 
