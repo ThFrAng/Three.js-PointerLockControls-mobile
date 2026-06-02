@@ -1,28 +1,28 @@
 import {
 	Controls,
 	Euler,
-	Vector3
+	Vector3,
+	Vector2
 } from 'three';
 
-var mobile
-mobile = false;
-if(window.matchMedia("(any-pointer: coarse)").matches) {
-    mobile = true
+let mobile = false;
+if( window.matchMedia( "(any-pointer: coarse)" ).matches ) {
+    
+	mobile = true;
+	
 }
 
 const ww = document.body.clientWidth / 2;
 const wh = document.body.clientHeight / 2;
 
-var _array_x = []
-var _array_y = []
-var _touches_x, _touches_y;
-var _last_x, _last_y;
-var _eulerX_angle = [].map(Number)
-var _eulerY_angle = [].map(Number)
-var _eulerY, _eulerX;
-var _eulerY_final = 0;
-var _eulerX_final = 0;
-var _eulerY_total, _eulerX_total;
+let _array_x, _array_y = [];
+let _touches_x, _touches_y;
+let _last_x, _last_y;
+let _eulerX_angle = [].map( Number );
+let _eulerY_angle = [].map( Number );
+let _eulerY, _eulerX;
+const _eulerFinal = new Vector2( 0, 0 );
+const _eulerTotal = new Vector2();
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
 const _vector = new Vector3();
@@ -230,10 +230,14 @@ class PointerLockControls extends Controls {
 	
 	lock( unadjustedMovement = false ) {
 
-		if( mobile == true) {
+		if( mobile ) {
 
 			this.isLocked = true;
-			// this.connect();
+			
+			_euler.setFromQuaternion( this.object.quaternion );
+
+			_eulerFinal.x = _euler.x;
+			_eulerFinal.y = _euler.y;
 			
 		} else {
 
@@ -268,8 +272,8 @@ function arrayTouches( event ) {
 	_last_x = _array_x[ _array_x.length - 2 ];
 	_last_y = _array_y[ _array_y.length - 2 ];
 
-	_eulerY = ( _touches_x - _last_x ) * 0.004;
-	_eulerX = ( _touches_y - _last_y ) * 0.004;
+	_eulerY = ( _touches_x - _last_x ) * 0.004 * this.pointerSpeed;
+	_eulerX = ( _touches_y - _last_y ) * 0.004 * this.pointerSpeed;
 
 	if ( _eulerY ) {
 		
@@ -280,30 +284,33 @@ function arrayTouches( event ) {
 
 		_eulerY_angle.push(0);
 		_eulerX_angle.push(0);
+
 	}
 
 	this.dispatchEvent( _changeEvent );
 }
 
 function onTouchMove( event ) {
+	
+	if ( this.enabled === false || this.isLocked === false ) return;
 
 	const camera = this.object;
 	_euler.setFromQuaternion( camera.quaternion );
 
-	_eulerY_total = _eulerY_angle.reduce( function ( sum, element ) {
+	_eulerTotal.y = _eulerY_angle.reduce( function ( sum, element ) {
 
 		return sum + element;
 
 	}, 0 );
 
-	_eulerX_total = _eulerX_angle.reduce( function ( sum, element ) {
+	_eulerTotal.x = _eulerX_angle.reduce( function ( sum, element ) {
 
 		return sum + element;
 
 	}, 0 );
 
-	_euler.y = _eulerY_final + _eulerY_total;
-	_euler.x = _eulerX_final + _eulerX_total;
+	_euler.y = _eulerFinal.y + _eulerTotal.y;
+	_euler.x = _eulerFinal.x + _eulerTotal.x;
 
 	camera.quaternion.setFromEuler( _euler );
 
@@ -313,8 +320,8 @@ function onTouchMove( event ) {
 
 function onTouchEnd( event ) {
 	
-	_eulerY_final = _euler.y;
-	_eulerX_final = _euler.x;
+	_eulerFinal.y = _euler.y;
+	_eulerFinal.x = _euler.x;
 	
 	_eulerY_angle = [];
 	_eulerX_angle = [];
